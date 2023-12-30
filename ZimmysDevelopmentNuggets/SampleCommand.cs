@@ -78,6 +78,8 @@ namespace ZimmysDevelopmentNuggets
 
             OleMenuCommandService commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
             Instance = new SampleCommand(package, commandService);
+
+            
         }
 
         /// <summary>
