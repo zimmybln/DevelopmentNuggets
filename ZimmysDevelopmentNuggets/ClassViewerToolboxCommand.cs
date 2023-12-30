@@ -5,7 +5,9 @@ using System.ComponentModel.Design;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
+using EnvDTE;
 using Task = System.Threading.Tasks.Task;
+using System.Windows.Forms;
 
 namespace ZimmysDevelopmentNuggets
 {
@@ -43,6 +45,9 @@ namespace ZimmysDevelopmentNuggets
             var menuCommandID = new CommandID(CommandSet, CommandId);
             var menuItem = new MenuCommand(this.Execute, menuCommandID);
             commandService.AddCommand(menuItem);
+
+
+
         }
 
         /// <summary>
@@ -76,6 +81,7 @@ namespace ZimmysDevelopmentNuggets
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
 
             OleMenuCommandService commandService = await package.GetServiceAsync((typeof(IMenuCommandService))) as OleMenuCommandService;
+
             Instance = new ClassViewerToolboxCommand(package, commandService);
         }
 

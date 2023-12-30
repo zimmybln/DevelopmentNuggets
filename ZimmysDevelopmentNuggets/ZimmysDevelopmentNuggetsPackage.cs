@@ -1,7 +1,11 @@
-﻿using Microsoft.VisualStudio.Shell;
+﻿using EnvDTE;
+using EnvDTE80;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 
 namespace ZimmysDevelopmentNuggets
@@ -52,6 +56,27 @@ namespace ZimmysDevelopmentNuggets
             await ClassViewerToolboxCommand.InitializeAsync(this);
         }
 
+        public override IVsAsyncToolWindowFactory GetAsyncToolWindowFactory(Guid toolWindowType)
+        {
+            return toolWindowType.Equals(Guid.Parse("420ab79b-cc44-4cc5-8f1b-04536950da43")) ? this : null;
+        }
+
+        protected override string GetToolWindowTitle(Type toolWindowType, int id)
+        {
+            return toolWindowType == typeof(ClassViewerToolbox) ? "Titel der Klassenansicht" : base.GetToolWindowTitle(toolWindowType, id);
+        }
+
+        protected override async Task<object> InitializeToolWindowAsync(Type toolWindowType, int id, CancellationToken cancellationToken)
+        {
+            // Perform as much work as possible in this method which is being run on a background thread.
+            // The object returned from this method is passed into the constructor of the SampleToolWindow 
+            var dte = await GetServiceAsync(typeof(DTE)) as DTE2;
+            
+            return new ClassViewerState()
+            {
+                DTE = dte
+            };
+        }
         #endregion
     }
 }
