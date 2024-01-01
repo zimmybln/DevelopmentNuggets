@@ -88,7 +88,7 @@
     <GuidSymbol name="guidZimmysDevelopmentNuggetsPackageCmdSet" value="{48e276d8-65a1-4b7c-beca-b2d17833da0e}">
       <IDSymbol name="MyMenuGroup" value="0x1020" />
       <IDSymbol name="SampleCommandId" value="0x0100" />
-      <IDSymbol value="4129" name="cmdidClassViewerToolboxCommand" />
+      <IDSymbol name="cmdidClassViewerToolboxCommand" value="4129"  />
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{00b6459e-f3dc-4ec8-98d8-0cbeb95b37d8}">

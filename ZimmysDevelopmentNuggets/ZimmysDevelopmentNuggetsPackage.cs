@@ -6,6 +6,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement;
 using Task = System.Threading.Tasks.Task;
 
 namespace ZimmysDevelopmentNuggets
@@ -30,7 +31,7 @@ namespace ZimmysDevelopmentNuggets
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [Guid(ZimmysDevelopmentNuggetsPackage.PackageGuidString)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    [ProvideToolWindow(typeof(ClassViewerToolbox))]
+    [ProvideToolWindow(typeof(DocumentManagementToolbox))]
     public sealed class ZimmysDevelopmentNuggetsPackage : AsyncPackage
     {
         /// <summary>
@@ -52,8 +53,12 @@ namespace ZimmysDevelopmentNuggets
             // When initialized asynchronously, the current thread may be a background thread at this point.
             // Do any initialization that requires the UI thread after switching to the UI thread.
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
-            await SampleCommand.InitializeAsync(this);
-            await ClassViewerToolboxCommand.InitializeAsync(this);
+
+            // Initialize Commands
+            await Commands.SampleCommand.InitializeAsync(this);
+
+            // Initialize ToolboxWindows
+            await Commands.ClassViewerToolboxCommand.InitializeAsync(this);
         }
 
         public override IVsAsyncToolWindowFactory GetAsyncToolWindowFactory(Guid toolWindowType)
@@ -63,7 +68,7 @@ namespace ZimmysDevelopmentNuggets
 
         protected override string GetToolWindowTitle(Type toolWindowType, int id)
         {
-            return toolWindowType == typeof(ClassViewerToolbox) ? "Titel der Klassenansicht" : base.GetToolWindowTitle(toolWindowType, id);
+            return toolWindowType == typeof(DocumentManagementToolbox) ? "Titel der Klassenansicht" : base.GetToolWindowTitle(toolWindowType, id);
         }
 
         protected override async Task<object> InitializeToolWindowAsync(Type toolWindowType, int id, CancellationToken cancellationToken)
@@ -72,7 +77,7 @@ namespace ZimmysDevelopmentNuggets
             // The object returned from this method is passed into the constructor of the SampleToolWindow 
             var dte = await GetServiceAsync(typeof(DTE)) as DTE2;
             
-            return new ClassViewerState()
+            return new Components.ClassViewerState()
             {
                 DTE = dte
             };
