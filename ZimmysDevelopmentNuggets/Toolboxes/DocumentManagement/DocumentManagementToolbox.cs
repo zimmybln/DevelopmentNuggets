@@ -38,6 +38,5 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
             // the object returned by the Content property.
             this.Content = new DocumentManagementToolboxControl(state);
         }
-
     }
 }

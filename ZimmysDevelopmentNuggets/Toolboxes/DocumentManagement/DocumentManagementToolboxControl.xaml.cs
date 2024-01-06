@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using EnvDTE;
@@ -15,6 +17,13 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
         private ClassViewerState _state;
         private DocumentEvents _documentEvents;
         private SelectionEvents _selectionEvents;
+        private SolutionEvents _solutionEvents;
+
+        // TODO: Ermitteln, welche Konfigurationen vorliegen und diese auflisten
+
+        // TODO: Möglichkeit, den aktuellen Zustand zu speichern
+
+        // TODO: Möglichkeit, den aktuellen Zustand wieder herzustellen (ersetzen oder ergänzen)
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ClassViewerToolboxControl"/> class.
@@ -28,11 +37,19 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
 
             _documentEvents = _state.DTE.Events.DocumentEvents;
             _selectionEvents = _state.DTE.Events.SelectionEvents;
+            _solutionEvents = _state.DTE.Events.SolutionEvents;
 
             _documentEvents.DocumentSaved += DocumentEventsOnDocumentSaved;
             _documentEvents.DocumentOpened += DocumentEventsOnDocumentOpened;
 
             _selectionEvents.OnChange += SelectionEventsOnOnChange;
+
+            _solutionEvents.Opened += SolutionOpened;
+        }
+
+        private void SolutionOpened()
+        {
+           
         }
 
         private void DocumentEventsOnDocumentSaved(Document document)
@@ -61,12 +78,33 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
         {
             lstEvents.Items.Clear();
 
+            List<FileCollection> fileCollections = new List<FileCollection>();
 
+            string solutionPath = _state.DTE.Solution.FileName.ToLower();
+            
+            FileCollection fc = new FileCollection()
+            {
+                Name = DateTime.Now.ToString(),
+                Files = new List<string>()
+            };
 
             foreach (Document document in _state.DTE.Documents)
             {
-                lstEvents.Items.Add($"Dokument '{document.Name}' '{document.FullName}' '{document.Path}'");
+                //lstEvents.Items.Add($"Dokument '{document.Name}' '{document.FullName}' '{document.Path}'");
+
+                var documentFileName = document.FullName.ToLower();
+
+                if (documentFileName.StartsWith(solutionPath))
+                {
+                    documentFileName = documentFileName.Remove(0, solutionPath.Length);
+                }
+                
+                fc.Files.Add(documentFileName);
             }
+
+            fileCollections.Add(fc);
+
+            FileCollectionsContainer.Save(fileCollections, _state.DTE.Solution.FileName);
         }
     }
 }

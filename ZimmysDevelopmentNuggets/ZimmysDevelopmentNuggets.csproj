@@ -46,6 +46,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Components\ClassViewerState.cs" />
+    <Compile Include="Components\FileCollectionsContainer.cs" />
     <Compile Include="Toolboxes\DocumentManagement\DocumentManagementToolbox.cs" />
     <Compile Include="Commands\ClassViewerToolboxCommand.cs" />
     <Compile Include="Toolboxes\DocumentManagement\DocumentManagementToolboxControl.xaml.cs">
