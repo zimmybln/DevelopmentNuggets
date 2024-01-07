@@ -100,13 +100,17 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
                 return;
 
             var fileCollectionName = dlg.Name;
-            
-            // lstEvents.Items.Clear();
 
-            List<FileCollection> fileCollections = new List<FileCollection>();
+            string solutionPath = Path.GetDirectoryName(_state.DTE.Solution.FileName).ToLower();
 
-            string solutionPath = _state.DTE.Solution.FileName.ToLower();
-            
+            if (_fileCollections?.Any() ?? true)
+            {
+                var existingFileCollections = FileCollectionsContainer.Load(solutionPath).ToList();
+
+                _fileCollections = (existingFileCollections?.Any() ?? false) ? existingFileCollections : new List<FileCollection>();
+            }
+
+            // eine neue Sammlung erstellen
             FileCollection fc = new FileCollection()
             {
                 Name = fileCollectionName,
@@ -125,14 +129,19 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
                 fc.Files.Add(documentFileName);
             }
 
-            fileCollections.Add(fc);
+            _fileCollections.Add(fc);
 
-            FileCollectionsContainer.Save(fileCollections, _state.DTE.Solution.FileName);
+            FileCollectionsContainer.Save(_fileCollections, solutionPath);
+
+            // Eintrag der Liste hinzufügen
+            lstEvents.Items.Add(fc.Name);
         }
 
         private void LoadButton_OnClick(object sender, RoutedEventArgs e)
         {
-            var fc = FileCollectionsContainer.Load(_state.DTE.Solution.FileName.ToLower());
+            lstEvents.Items.Clear();
+
+            var fc = FileCollectionsContainer.Load(Path.GetDirectoryName(_state.DTE.Solution.FileName).ToLower());
 
             if (fc != null)
             {
@@ -157,7 +166,7 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
 
                 if (fc?.Files?.Any() ?? false)
                 {
-                    var rootPath = _state.DTE.Solution.FileName;
+                    var rootPath = Path.GetDirectoryName(_state.DTE.Solution.FileName);
 
                     foreach (var f in fc.Files)
                     {
