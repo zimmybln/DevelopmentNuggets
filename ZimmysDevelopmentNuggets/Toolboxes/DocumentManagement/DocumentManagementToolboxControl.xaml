@@ -10,12 +10,27 @@
              d:DesignHeight="300" d:DesignWidth="300"
              Name="MyToolWindow">
     <Grid>
-        <StackPanel Orientation="Vertical">
-            <TextBlock Margin="10" HorizontalAlignment="Center">ClassViewerToolbox</TextBlock>
-            <Button Content="Click me!" Click="button1_Click" Width="120" Height="20" Name="button1"/>
-            <ListBox x:Name="lstEvents" Margin="2" Height="300">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-            </ListBox>
+        <!-- Buttons -->
+        <StackPanel Grid.Row="0" Grid.Column="0"
+                    Orientation="Horizontal">
+            <StackPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="5"></Setter>
+                </Style>
+            </StackPanel.Resources>
+            <Button Content="Laden" Click="LoadButton_OnClick" Width="80" Height="20" Name="LoadButton"/>
+            <Button Content="Speichern" Click="button1_Click" Width="80" Height="20" Name="button1"/>
         </StackPanel>
+
+        <ListBox Grid.Column="0" Grid.Row="1" x:Name="lstEvents" Margin="2" Height="300" VerticalAlignment="Top"
+                 MouseDoubleClick="LstEvents_OnMouseDoubleClick">
+
+        </ListBox>
+
     </Grid>
 </UserControl>

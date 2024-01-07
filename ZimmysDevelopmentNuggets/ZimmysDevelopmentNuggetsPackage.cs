@@ -1,5 +1,6 @@
 ﻿using EnvDTE;
 using EnvDTE80;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
@@ -32,6 +33,7 @@ namespace ZimmysDevelopmentNuggets
     [Guid(ZimmysDevelopmentNuggetsPackage.PackageGuidString)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideToolWindow(typeof(DocumentManagementToolbox))]
+    [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionOpening_string, PackageAutoLoadFlags.BackgroundLoad)]
     public sealed class ZimmysDevelopmentNuggetsPackage : AsyncPackage
     {
         /// <summary>
@@ -59,6 +61,18 @@ namespace ZimmysDevelopmentNuggets
 
             // Initialize ToolboxWindows
             await Commands.ClassViewerToolboxCommand.InitializeAsync(this);
+
+            // Since this package might not be initialized until after a solution has finished loading,
+            // we need to check if a solution has already been loaded and then handle it.
+            bool isSolutionLoaded = await IsSolutionLoadedAsync();
+
+            if (isSolutionLoaded)
+            {
+                HandleOpenSolution();
+            }
+
+            // Listen for subsequent solution events
+
         }
 
         public override IVsAsyncToolWindowFactory GetAsyncToolWindowFactory(Guid toolWindowType)
@@ -83,5 +97,21 @@ namespace ZimmysDevelopmentNuggets
             };
         }
         #endregion
+
+        private async Task<bool> IsSolutionLoadedAsync()
+        {
+            await JoinableTaskFactory.SwitchToMainThreadAsync();
+            var solService = await GetServiceAsync(typeof(SVsSolution)) as IVsSolution;
+
+            ErrorHandler.ThrowOnFailure(solService.GetProperty((int)__VSPROPID.VSPROPID_IsSolutionOpen, out object value));
+
+            return value is bool isSolOpen && isSolOpen;
+        }
+
+        private void HandleOpenSolution(object sender = null, EventArgs e = null)
+        {
+            // Handle the open solution and try to do as much work
+            // on a background thread as possible
+        }
     }
 }

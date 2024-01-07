@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using EnvDTE;
 using ZimmysDevelopmentNuggets.Components;
 
@@ -19,9 +21,14 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
         private SelectionEvents _selectionEvents;
         private SolutionEvents _solutionEvents;
 
+        private DTEEvents _dteEventsClass;
+
+        private List<FileCollection> _fileCollections = new List<FileCollection>();
+
         // TODO: Ermitteln, welche Konfigurationen vorliegen und diese auflisten
 
-        // TODO: Möglichkeit, den aktuellen Zustand zu speichern
+        // TODO: Möglichkeit, den aktuellen Zustand zu speichern, Dialog: https://learn.microsoft.com/en-us/visualstudio/extensibility/creating-and-managing-modal-dialog-boxes?view=vs-2022
+        // https://www.visualstudiogeeks.com/extensibility/visual%20studio/options-for-displaying-modal-dialogs-in-visual-studio-extensions
 
         // TODO: Möglichkeit, den aktuellen Zustand wieder herzustellen (ersetzen oder ergänzen)
 
@@ -35,9 +42,12 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
 
             _state = state;
 
+            
+
             _documentEvents = _state.DTE.Events.DocumentEvents;
             _selectionEvents = _state.DTE.Events.SelectionEvents;
             _solutionEvents = _state.DTE.Events.SolutionEvents;
+            _dteEventsClass = _state.DTE.Events.DTEEvents;
 
             _documentEvents.DocumentSaved += DocumentEventsOnDocumentSaved;
             _documentEvents.DocumentOpened += DocumentEventsOnDocumentOpened;
@@ -45,6 +55,14 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
             _selectionEvents.OnChange += SelectionEventsOnOnChange;
 
             _solutionEvents.Opened += SolutionOpened;
+            // _solutionEvents
+
+            _dteEventsClass.OnStartupComplete += OnStartupComplete;
+        }
+
+        private void OnStartupComplete()
+        {
+
         }
 
         private void SolutionOpened()
@@ -59,12 +77,12 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
 
         private void SelectionEventsOnOnChange()
         {
-            lstEvents.Items.Add($"Auswahl hat sich geändert {DateTime.Now}");
+           // lstEvents.Items.Add($"Auswahl hat sich geändert {DateTime.Now}");
         }
 
         private void DocumentEventsOnDocumentOpened(Document document)
         {
-            lstEvents.Items.Add($"Dokument geöffnet {document.Name} {DateTime.Now}");
+            // lstEvents.Items.Add($"Dokument geöffnet {document.Name} {DateTime.Now}");
         }
 
         /// <summary>
@@ -76,7 +94,14 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
         [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Default event handler naming pattern")]
         private void button1_Click(object sender, RoutedEventArgs e)
         {
-            lstEvents.Items.Clear();
+            FileCollectionPropertiesDialog dlg = new FileCollectionPropertiesDialog();
+
+            if (!dlg.ShowModal() == true)
+                return;
+
+            var fileCollectionName = dlg.Name;
+            
+            // lstEvents.Items.Clear();
 
             List<FileCollection> fileCollections = new List<FileCollection>();
 
@@ -84,14 +109,12 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
             
             FileCollection fc = new FileCollection()
             {
-                Name = DateTime.Now.ToString(),
+                Name = fileCollectionName,
                 Files = new List<string>()
             };
 
             foreach (Document document in _state.DTE.Documents)
             {
-                //lstEvents.Items.Add($"Dokument '{document.Name}' '{document.FullName}' '{document.Path}'");
-
                 var documentFileName = document.FullName.ToLower();
 
                 if (documentFileName.StartsWith(solutionPath))
@@ -105,6 +128,51 @@ namespace ZimmysDevelopmentNuggets.Toolboxes.DocumentManagement
             fileCollections.Add(fc);
 
             FileCollectionsContainer.Save(fileCollections, _state.DTE.Solution.FileName);
+        }
+
+        private void LoadButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            var fc = FileCollectionsContainer.Load(_state.DTE.Solution.FileName.ToLower());
+
+            if (fc != null)
+            {
+                _fileCollections = fc.ToList();
+                foreach (var s in _fileCollections.Select(f => f.Name))
+                {
+                    lstEvents.Items.Add(s);
+                }
+            }
+        }
+
+        private void LstEvents_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
+            if (sender is ListBox listBox && listBox.SelectedItem != null && (_fileCollections?.Any() ?? false))
+            {
+                string itemName = listBox.SelectedItem.ToString();
+
+                // nach dem Element suchen
+                var fc = _fileCollections.FirstOrDefault(i => i.Name.Equals(itemName));
+
+                if (fc?.Files?.Any() ?? false)
+                {
+                    var rootPath = _state.DTE.Solution.FileName;
+
+                    foreach (var f in fc.Files)
+                    {
+                        var fileName = rootPath + f;
+
+                        if (File.Exists(fileName))
+                        {
+                            // TODO: Überprüfen, ob das Dokument überhaupt noch Teil der Solution ist
+
+                            _state.DTE.Documents.Open(fileName);
+                        }
+                    }
+
+                }
+            }
         }
     }
 }
